@@ -10,7 +10,7 @@
 
     <MediaTemplate EmbedCab="yes" />
 
-    <Icon Id="SimPrinterIcon" SourceFile="..\SimPrinter.ico" />
+    <Icon Id="SimPrinterIcon" SourceFile="..\src\SimPrinter\SimPrinter.ico" />
     <Property Id="ARPPRODUCTICON" Value="SimPrinterIcon" />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
 

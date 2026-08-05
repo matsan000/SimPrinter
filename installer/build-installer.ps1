@@ -17,7 +17,7 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
-$csprojPath = Join-Path $root "SimPrinter.csproj"
+$csprojPath = Join-Path $root "src\SimPrinter\SimPrinter.csproj"
 $publishDir = Join-Path $root "publish"
 $installerDir = Join-Path $root "installer"
 
@@ -49,7 +49,7 @@ if (Test-Path $publishDir) {
 Write-Host "Publishing..." -ForegroundColor Cyan
 Push-Location $root
 try {
-    dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o $publishDir
+    dotnet publish $csprojPath -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o $publishDir
     if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed" }
 }
 finally {

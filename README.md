@@ -34,7 +34,7 @@ install.
 
 You'll need Windows 10/11 64-bit and either Visual Studio 2022 (Community's free, grab
 the .NET desktop development workload) or just the .NET 8 SDK on its own. Open
-`SimPrinter.csproj` and hit F5, or:
+`SimPrinter.slnx` and hit F5, or:
 
 ```
 dotnet build -c Release
@@ -44,12 +44,12 @@ A thermal printer isn't required to build or run the thing - you just won't have
 to print to. If you've got one, it'll either show up as a COM port (USB or paired
 Bluetooth SPP) or as a normal Windows printer through its driver.
 
-One thing worth knowing: `lib/SimConnect/` has Microsoft's SimConnect client vendored in
-(the managed DLL, the native one it calls into, and the VC++ redistributable that native
-DLL needs) so the app can talk to the sim. These are Microsoft's files, not mine, and
-they're not under this repo's MIT license - see the note at the bottom of
-[LICENSE](LICENSE) if that matters to you. Same files ship with the free MSFS SDK if you'd
-rather source them yourself.
+One thing worth knowing: `src/SimPrinter/lib/SimConnect/` has Microsoft's SimConnect
+client vendored in (the managed DLL, the native one it calls into, and the VC++
+redistributable that native DLL needs) so the app can talk to the sim. These are
+Microsoft's files, not mine, and they're not under this repo's MIT license - see the note
+at the bottom of [LICENSE](LICENSE) if that matters to you. Same files ship with the free
+MSFS SDK if you'd rather source them yourself.
 
 ## Using it
 
@@ -70,25 +70,29 @@ your printer wants something else.
 ## Where things live
 
 ```
-SimPrinter.csproj        Project file
-Program.cs                Entry point
-MainForm.cs / ConfigForm.cs / PastePrintForm.cs   UI
-UiStyle.cs                 Shared theming and custom-drawn controls
-SimBriefFlightPlan.cs      Flight plan data model + JSON parsing
-SimBriefClient.cs          Calls the SimBrief API
-SayIntentionsClient.cs     Weather/gate lookups
-SimConnectClient.cs        Reads the sim's Zulu clock via SimConnect
-LoadsheetGenerator.cs      Builds preliminary/final loadsheet values and tickets
-EscPosBuilder.cs           Builds ESC/POS byte sequences and ticket layouts
-TicketTemplate.cs          User-editable flight-plan ticket template
-PrinterService.cs          Sends bytes via COM port or the Windows print spooler
-RemoteControlServer.cs     Localhost HTTP server used by the Stream Deck plugin
-Preferences.cs             Settings persistence (%APPDATA%\SimPrinter)
-installer/                 WiX installer source (build-installer.ps1 to build the MSI)
-streamdeck-plugin/         Companion Elgato Stream Deck plugin
+SimPrinter.slnx              Solution file - open this in Visual Studio
+src/SimPrinter/
+  SimPrinter.csproj           Project file
+  Program.cs                  Entry point
+  MainForm.cs / ConfigForm.cs / PastePrintForm.cs   UI
+  UiStyle.cs                   Shared theming and custom-drawn controls
+  SimBriefFlightPlan.cs        Flight plan data model + JSON parsing
+  SimBriefClient.cs            Calls the SimBrief API
+  SayIntentionsClient.cs       Weather/gate lookups
+  SimConnectClient.cs          Reads the sim's Zulu clock via SimConnect
+  LoadsheetGenerator.cs        Builds preliminary/final loadsheet values and tickets
+  EscPosBuilder.cs             Builds ESC/POS byte sequences and ticket layouts
+  TicketTemplate.cs            User-editable flight-plan ticket template
+  PrinterService.cs            Sends bytes via COM port or the Windows print spooler
+  RemoteControlServer.cs       Localhost HTTP server used by the Stream Deck plugin
+  Preferences.cs               Settings persistence (%APPDATA%\SimPrinter)
+  lib/SimConnect/               Vendored SimConnect client (see below)
+installer/                    WiX installer source (build-installer.ps1 builds the MSI)
+streamdeck-plugin/            Companion Elgato Stream Deck plugin
+assets/                       Logo and other non-code assets
 ```
 
 ## License
 
 MIT, see [LICENSE](LICENSE) - except the vendored SimConnect files under
-`lib/SimConnect/`, which are Microsoft's own redistributables.
+`src/SimPrinter/lib/SimConnect/`, which are Microsoft's own redistributables.
