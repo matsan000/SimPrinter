@@ -14,9 +14,6 @@ installer/*.wixpdb
 installer/*.zip
 installer/.wix/
 
-# Stream Deck plugin npm dependencies (restore via npm install)
-streamdeck-plugin/**/node_modules/
-
 # Runtime-generated files that should never be committed
 SimBriefRaw.json
 TicketTemplate.txt

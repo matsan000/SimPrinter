@@ -26,9 +26,8 @@ performance report copied out of SimBrief's calculator, since that data isn't ex
 through any API.
 
 Output goes either to a thermal printer over serial/COM, or to whatever's already
-installed as a Windows printer. Dark mode's in there, the window resizes down reasonably
-for smaller screens, and there's a companion [Stream Deck plugin](streamdeck-plugin/) if
-you'd rather hit a physical key than alt-tab.
+installed as a Windows printer. Dark mode's in there, and the window resizes down
+reasonably for smaller screens.
 
 ## Installing
 
@@ -89,11 +88,9 @@ src/SimPrinter/
   EscPosBuilder.cs             Builds ESC/POS byte sequences and ticket layouts
   TicketTemplate.cs            User-editable flight-plan ticket template
   PrinterService.cs            Sends bytes via COM port or the Windows print spooler
-  RemoteControlServer.cs       Localhost HTTP server used by the Stream Deck plugin
   Preferences.cs               Settings persistence (%APPDATA%\SimPrinter)
   lib/SimConnect/               Vendored SimConnect client (see below)
 installer/                    WiX installer source (build-installer.ps1 builds the MSI)
-streamdeck-plugin/            Companion Elgato Stream Deck plugin
 assets/                       Logo and other non-code assets
 ```
 

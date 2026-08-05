@@ -16,7 +16,6 @@ namespace SimPrinter
         private readonly Label _lblStatus = new();
         private readonly Label _lblOffBlock = new();
         private readonly Preferences _preferences = Preferences.Load();
-        private readonly RemoteControlServer _remoteServer = new();
         private readonly SimConnectClient _simConnect = new();
         private Panel _cardActions = null!;
         private Panel _actionsContent = null!;
@@ -39,7 +38,6 @@ namespace SimPrinter
             StartPosition = FormStartPosition.CenterScreen;
 
             BuildUi();
-            StartRemoteControl();
             StartSimConnect();
         }
 
@@ -87,22 +85,8 @@ namespace SimPrinter
                 : $"Off-block was {formatted} ago";
         }
 
-        /// <summary>
-        /// Lets external tools (e.g. an Elgato Stream Deck plugin) trigger the three print
-        /// actions over a localhost-only HTTP server while SimPrinter is running.
-        /// </summary>
-        private void StartRemoteControl()
-        {
-            _remoteServer.HasFlightPlan = () => _currentPlan != null;
-            _remoteServer.OnPrintFlightPlan = () => BeginInvoke(new Action(ExecutePrintFlightPlan));
-            _remoteServer.OnPrintPreliminary = () => BeginInvoke(new Action(ExecutePrintPreliminary));
-            _remoteServer.OnPrintFinal = () => BeginInvoke(new Action(ExecutePrintFinal));
-            _remoteServer.Start();
-        }
-
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            _remoteServer.Dispose();
             _simConnect.Dispose();
             base.OnFormClosed(e);
         }
