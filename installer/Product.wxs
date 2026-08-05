@@ -34,7 +34,7 @@
     </StandardDirectory>
 
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
-      <Files Include="C:\Users\mathi\Downloads\SimPrinter\publish\**" />
+      <Files Include="..\publish\**" />
     </ComponentGroup>
 
     <Feature Id="Main">
