@@ -109,39 +109,44 @@ namespace SimPrinter
 
         private void BuildUi()
         {
-            // AutoSize + Dock=Top (not Fill) so root's height is its own natural total,
+            // The footer (Settings + off-block countdown) is a direct child of the form with
+            // Dock=Bottom, not part of the scrollable content below - that's what keeps it
+            // pinned to the bottom of the window instead of just trailing after the Print
+            // card, which would otherwise leave it floating awkwardly on a taller window.
+            var footer = BuildFooter();
+            footer.Dock = DockStyle.Bottom;
+            Controls.Add(footer);
+
+            // AutoSize + Dock=Top (not Fill) so contentRoot's height is its own natural total,
             // handed to the AutoScroll host below - shrinking the window past that natural
-            // size scrolls instead of clipping the Print card's buttons or the footer, which
-            // is what actually lets the window go small on low-resolution screens.
-            var root = new TableLayoutPanel
+            // size scrolls instead of clipping the Print card's buttons, which is what actually
+            // lets the window go small on low-resolution screens.
+            var contentRoot = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 ColumnCount = 1,
-                RowCount = 3,
+                RowCount = 2,
                 BackColor = UiStyle.BackgroundColor
             };
-            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            contentRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            contentRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            root.Controls.Add(BuildTopPanel(), 0, 0);
+            contentRoot.Controls.Add(BuildTopPanel(), 0, 0);
 
             _cardActions = UiStyle.CreateCard("Print", out _actionsContent);
             // CreateCard defaults to Dock=Fill, which is ambiguous when placed in an AutoSize
             // row (WinForms can't ask "what's your preferred size" of a Fill-docked control).
             // An explicit Height + Dock=Top sidesteps that - matches the card's real content:
-            // padding(36) + header(~37) + ICAO label(~25) + input row(54) + 6 buttons at 40px
-            // with 10px gaps between them (last one has no trailing margin).
+            // padding(36) + header(~37) + ICAO label(~25) + input row(54) + 5 buttons at 40px
+            // with 10px gaps between them.
             _cardActions.Dock = DockStyle.Top;
-            _cardActions.Height = 442;
+            _cardActions.Height = 406;
             _cardActions.Margin = new Padding(0, 14, 0, 14);
             BuildActionsContent(_actionsContent);
             SetFlightPlanActionsEnabled(false);
-            root.Controls.Add(_cardActions, 0, 1);
-
-            root.Controls.Add(BuildFooter(), 0, 2);
+            contentRoot.Controls.Add(_cardActions, 0, 1);
 
             var scrollHost = new Panel
             {
@@ -149,7 +154,7 @@ namespace SimPrinter
                 AutoScroll = true,
                 BackColor = UiStyle.BackgroundColor
             };
-            scrollHost.Controls.Add(root);
+            scrollHost.Controls.Add(contentRoot);
 
             Controls.Add(scrollHost);
         }
@@ -199,12 +204,11 @@ namespace SimPrinter
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 8,
+                RowCount = 7,
                 Margin = new Padding(0)
             };
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -251,7 +255,10 @@ namespace SimPrinter
             _btnGetWeather.Text = "Get Weather";
             _btnGetWeather.Dock = DockStyle.Top;
             _btnGetWeather.Height = 40;
-            _btnGetWeather.Margin = new Padding(0, 0, 0, 10);
+            // Extra bottom margin (vs. the 10px between the other buttons) visually groups
+            // this with the ICAO/METAR-ATIS input above it, since it acts on that input,
+            // while Request Gate and the print actions below are their own separate group.
+            _btnGetWeather.Margin = new Padding(0, 0, 0, 24);
             _btnGetWeather.Click += BtnGetWeather_Click;
             UiStyle.StyleSecondaryButton(_btnGetWeather);
 
@@ -281,18 +288,7 @@ namespace SimPrinter
             _btnPrintFinal.Height = 40;
             _btnPrintFinal.Margin = new Padding(0, 0, 0, 10);
             _btnPrintFinal.Click += BtnPrintFinal_Click;
-            UiStyle.StylePrimaryButton(_btnPrintFinal);
-
-            // Unlike the three buttons above, Print Text doesn't need a flight plan loaded -
-            // see SetFlightPlanActionsEnabled, which enables/disables those three individually
-            // rather than disabling _actionsContent as a whole (Enabled cascades to every
-            // descendant regardless of nesting, which would take Print Text down with them).
-            _btnPrintText.Text = "Print Text";
-            _btnPrintText.Dock = DockStyle.Fill;
-            _btnPrintText.Height = 40;
-            _btnPrintText.Margin = new Padding(0);
-            _btnPrintText.Click += BtnPrintText_Click;
-            UiStyle.StyleSecondaryButton(_btnPrintText);
+            UiStyle.StyleSecondaryButton(_btnPrintFinal);
 
             layout.Controls.Add(lblIcao, 0, 0);
             layout.Controls.Add(inputRow, 0, 1);
@@ -301,7 +297,6 @@ namespace SimPrinter
             layout.Controls.Add(_btnPrintFlightPlan, 0, 4);
             layout.Controls.Add(_btnPrintPrelim, 0, 5);
             layout.Controls.Add(_btnPrintFinal, 0, 6);
-            layout.Controls.Add(_btnPrintText, 0, 7);
 
             content.Controls.Add(layout);
         }
@@ -318,13 +313,14 @@ namespace SimPrinter
             var footer = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                ColumnCount = 2,
+                ColumnCount = 3,
                 RowCount = 1,
                 AutoSize = true,
                 Margin = new Padding(0)
             };
             footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
             _btnSettings.Text = "Settings";
             _btnSettings.AutoSize = false;
@@ -337,10 +333,21 @@ namespace SimPrinter
             _lblOffBlock.Dock = DockStyle.Fill;
             _lblOffBlock.TextAlign = ContentAlignment.MiddleRight;
             _lblOffBlock.ForeColor = UiStyle.MutedTextColor;
-            _lblOffBlock.Margin = new Padding(0);
+            _lblOffBlock.Margin = new Padding(0, 0, 10, 0);
+
+            // Doesn't need a flight plan loaded, unlike the three buttons in the Print card -
+            // see SetFlightPlanActionsEnabled, which only touches those three individually.
+            _btnPrintText.Text = "Print Text";
+            _btnPrintText.AutoSize = false;
+            _btnPrintText.Width = 120;
+            _btnPrintText.Height = 38;
+            _btnPrintText.Margin = new Padding(0);
+            _btnPrintText.Click += BtnPrintText_Click;
+            UiStyle.StyleSecondaryButton(_btnPrintText, UiStyle.BackgroundColor);
 
             footer.Controls.Add(_btnSettings, 0, 0);
             footer.Controls.Add(_lblOffBlock, 1, 0);
+            footer.Controls.Add(_btnPrintText, 2, 0);
 
             return footer;
         }
