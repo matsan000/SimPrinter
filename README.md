@@ -5,6 +5,11 @@ loadsheets, weather, gate assignment, whatever. Built this because staring at a 
 tab for dispatch paperwork never felt right when you've got a working 58mm thermal
 printer sitting on the desk doing nothing.
 
+<p>
+  <img src="assets/screenshots/main-window.png" width="45%" alt="SimPrinter main window">
+  <img src="assets/screenshots/settings.png" width="45%" alt="SimPrinter settings dialog">
+</p>
+
 ## What it does
 
 Fetch your latest OFP from SimBrief and print a flight-plan ticket from a template you
