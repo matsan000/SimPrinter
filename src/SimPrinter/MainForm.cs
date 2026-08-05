@@ -119,34 +119,29 @@ namespace SimPrinter
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 ColumnCount = 1,
-                RowCount = 4,
+                RowCount = 3,
                 BackColor = UiStyle.BackgroundColor
             };
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 270));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             root.Controls.Add(BuildTopPanel(), 0, 0);
 
-            var cardWeather = UiStyle.CreateCard("Get Weather", out Panel weatherContent);
-            cardWeather.Margin = new Padding(0, 14, 0, 14);
-            BuildWeatherContent(weatherContent);
-            root.Controls.Add(cardWeather, 0, 1);
-
             _cardActions = UiStyle.CreateCard("Print", out _actionsContent);
             // CreateCard defaults to Dock=Fill, which is ambiguous when placed in an AutoSize
             // row (WinForms can't ask "what's your preferred size" of a Fill-docked control).
             // An explicit Height + Dock=Top sidesteps that - matches the card's real content:
-            // padding(36) + header(~37) + 3 buttons at 40px with 10px gaps between them.
+            // padding(36) + header(~37) + ICAO label(~25) + input row(54) + 6 buttons at 40px
+            // with 10px gaps between them (last one has no trailing margin).
             _cardActions.Dock = DockStyle.Top;
-            _cardActions.Height = 213;
-            _cardActions.Margin = new Padding(0, 0, 0, 14);
-            _actionsContent.Enabled = false;
+            _cardActions.Height = 442;
+            _cardActions.Margin = new Padding(0, 14, 0, 14);
             BuildActionsContent(_actionsContent);
-            root.Controls.Add(_cardActions, 0, 2);
+            SetFlightPlanActionsEnabled(false);
+            root.Controls.Add(_cardActions, 0, 1);
 
-            root.Controls.Add(BuildFooter(), 0, 3);
+            root.Controls.Add(BuildFooter(), 0, 2);
 
             var scrollHost = new Panel
             {
@@ -194,17 +189,25 @@ namespace SimPrinter
             return panel;
         }
 
-        private void BuildWeatherContent(Panel content)
+        private void BuildActionsContent(Panel content)
         {
+            // Everything that ends up on paper lives in one "Print" card: the ICAO/weather
+            // lookup (Get Weather, Request Gate) and the SimBrief-plan prints are all "print
+            // something" actions from the user's point of view, so they're grouped together
+            // rather than split across a separate "Get Weather" card.
             var layout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 4,
+                RowCount = 8,
                 Margin = new Padding(0)
             };
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
@@ -255,30 +258,9 @@ namespace SimPrinter
             _btnRequestGate.Text = "Request Gate";
             _btnRequestGate.Dock = DockStyle.Top;
             _btnRequestGate.Height = 40;
-            _btnRequestGate.Margin = new Padding(0);
+            _btnRequestGate.Margin = new Padding(0, 0, 0, 10);
             _btnRequestGate.Click += BtnRequestGate_Click;
             UiStyle.StyleSecondaryButton(_btnRequestGate);
-
-            layout.Controls.Add(lblIcao, 0, 0);
-            layout.Controls.Add(inputRow, 0, 1);
-            layout.Controls.Add(_btnGetWeather, 0, 2);
-            layout.Controls.Add(_btnRequestGate, 0, 3);
-
-            content.Controls.Add(layout);
-        }
-
-        private void BuildActionsContent(Panel content)
-        {
-            var layout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 3,
-                Margin = new Padding(0)
-            };
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             _btnPrintFlightPlan.Text = "Print Flight Plan";
             _btnPrintFlightPlan.Dock = DockStyle.Fill;
@@ -297,15 +279,38 @@ namespace SimPrinter
             _btnPrintFinal.Text = "Print Final Loadsheet";
             _btnPrintFinal.Dock = DockStyle.Fill;
             _btnPrintFinal.Height = 40;
-            _btnPrintFinal.Margin = new Padding(0);
+            _btnPrintFinal.Margin = new Padding(0, 0, 0, 10);
             _btnPrintFinal.Click += BtnPrintFinal_Click;
             UiStyle.StylePrimaryButton(_btnPrintFinal);
 
-            layout.Controls.Add(_btnPrintFlightPlan, 0, 0);
-            layout.Controls.Add(_btnPrintPrelim, 0, 1);
-            layout.Controls.Add(_btnPrintFinal, 0, 2);
+            // Unlike the three buttons above, Print Text doesn't need a flight plan loaded -
+            // see SetFlightPlanActionsEnabled, which enables/disables those three individually
+            // rather than disabling _actionsContent as a whole (Enabled cascades to every
+            // descendant regardless of nesting, which would take Print Text down with them).
+            _btnPrintText.Text = "Print Text";
+            _btnPrintText.Dock = DockStyle.Fill;
+            _btnPrintText.Height = 40;
+            _btnPrintText.Margin = new Padding(0);
+            _btnPrintText.Click += BtnPrintText_Click;
+            UiStyle.StyleSecondaryButton(_btnPrintText);
+
+            layout.Controls.Add(lblIcao, 0, 0);
+            layout.Controls.Add(inputRow, 0, 1);
+            layout.Controls.Add(_btnGetWeather, 0, 2);
+            layout.Controls.Add(_btnRequestGate, 0, 3);
+            layout.Controls.Add(_btnPrintFlightPlan, 0, 4);
+            layout.Controls.Add(_btnPrintPrelim, 0, 5);
+            layout.Controls.Add(_btnPrintFinal, 0, 6);
+            layout.Controls.Add(_btnPrintText, 0, 7);
 
             content.Controls.Add(layout);
+        }
+
+        private void SetFlightPlanActionsEnabled(bool enabled)
+        {
+            _btnPrintFlightPlan.Enabled = enabled;
+            _btnPrintPrelim.Enabled = enabled;
+            _btnPrintFinal.Enabled = enabled;
         }
 
         private Control BuildFooter()
@@ -313,12 +318,11 @@ namespace SimPrinter
             var footer = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                ColumnCount = 3,
+                ColumnCount = 2,
                 RowCount = 1,
                 AutoSize = true,
                 Margin = new Padding(0)
             };
-            footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
@@ -326,17 +330,9 @@ namespace SimPrinter
             _btnSettings.AutoSize = false;
             _btnSettings.Width = 120;
             _btnSettings.Height = 38;
-            _btnSettings.Margin = new Padding(0, 0, 10, 0);
+            _btnSettings.Margin = new Padding(0);
             _btnSettings.Click += BtnSettings_Click;
             UiStyle.StyleSecondaryButton(_btnSettings, UiStyle.BackgroundColor);
-
-            _btnPrintText.Text = "Print Text";
-            _btnPrintText.AutoSize = false;
-            _btnPrintText.Width = 120;
-            _btnPrintText.Height = 38;
-            _btnPrintText.Margin = new Padding(0);
-            _btnPrintText.Click += BtnPrintText_Click;
-            UiStyle.StyleSecondaryButton(_btnPrintText, UiStyle.BackgroundColor);
 
             _lblOffBlock.Dock = DockStyle.Fill;
             _lblOffBlock.TextAlign = ContentAlignment.MiddleRight;
@@ -344,8 +340,7 @@ namespace SimPrinter
             _lblOffBlock.Margin = new Padding(0);
 
             footer.Controls.Add(_btnSettings, 0, 0);
-            footer.Controls.Add(_btnPrintText, 1, 0);
-            footer.Controls.Add(_lblOffBlock, 2, 0);
+            footer.Controls.Add(_lblOffBlock, 1, 0);
 
             return footer;
         }
@@ -380,7 +375,7 @@ namespace SimPrinter
             }
 
             _btnLoad.Enabled = false;
-            _actionsContent.Enabled = false;
+            SetFlightPlanActionsEnabled(false);
             _lblStatus.ForeColor = UiStyle.MutedTextColor;
             _lblStatus.Text = "Loading latest flight plan from SimBrief...";
 
@@ -391,7 +386,7 @@ namespace SimPrinter
                 _finalLoadsheetValues = _preferences.RandomizeFinalLoadsheet
                     ? LoadsheetGenerator.BuildFinalValues(plan, new Random())
                     : LoadsheetGenerator.BuildPreliminaryValues(plan);
-                _actionsContent.Enabled = true;
+                SetFlightPlanActionsEnabled(true);
                 _lblStatus.ForeColor = UiStyle.SuccessColor;
                 _lblStatus.Text = $"Loaded: {plan.OriginIcao} -> {plan.DestIcao} ({plan.Callsign})";
                 RefreshOffBlockLabel();
