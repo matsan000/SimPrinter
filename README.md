@@ -1,84 +1,73 @@
 # SimPrinter
 
-A companion app for Microsoft Flight Simulator that pulls your SimBrief flight plan and
-prints flight-plan tickets, loadsheets, weather, and gate assignments to a real 58mm
-thermal receipt printer (or any Windows printer) - so your virtual dispatch paperwork
-feels like an actual paper OFP instead of a browser tab.
+Pulls your SimBrief flight plan and prints it to a real receipt printer - flight plan,
+loadsheets, weather, gate assignment, whatever. Built this because staring at a browser
+tab for dispatch paperwork never felt right when you've got a working 58mm thermal
+printer sitting on the desk doing nothing.
 
-## Features
+## What it does
 
-- **SimBrief integration** - fetches your latest OFP by username or pilot ID and prints a
-  formatted flight-plan ticket, with a fully user-editable template
-  (`Settings -> Edit Ticket Template`)
-- **Preliminary and final loadsheets** - generated from the SimBrief plan, with optional
-  randomized last-minute pax/cargo changes for the final loadsheet
-- **Live weather and gate assignment** via [SayIntentions](https://sayintentions.ai/) -
-  print METAR/ATIS or a requested gate as an ACARS-style ticket
-- **Off-block countdown** - reads the sim's own Zulu clock via SimConnect and shows a live
-  countdown to your scheduled off-block time in the footer, so it stays correct even with
-  time acceleration or a non-real-time sim clock
-- **Print anything else** - a "Print Text" dialog for pasting arbitrary text (e.g. a
-  SimBrief takeoff/landing performance report copied from its web calculator) straight to
-  the printer
-- **Serial or Windows printer output** - talk directly to a COM-port thermal printer, or
-  use a printer already installed via a Windows driver
-- **Dark mode**, a resizable UI that scales down for small/low-resolution screens, and a
-  companion [Stream Deck plugin](streamdeck-plugin/) for triggering prints from physical
-  keys
+Fetch your latest OFP from SimBrief and print a flight-plan ticket from a template you
+can edit yourself (`Settings -> Edit Ticket Template`, plain text, no rebuild needed).
+Preliminary and final loadsheets get generated from the same plan, and the final one can
+throw in randomized last-minute pax/cargo changes if you want a bit of realism. If you've
+got a [SayIntentions](https://sayintentions.ai/) key set up you can also pull METAR/ATIS
+or a gate assignment and print those as ACARS-style tickets.
+
+There's a countdown in the footer to your scheduled off-block time, driven by SimConnect
+reading the sim's actual Zulu clock rather than your PC's clock - matters if you fly with
+time acceleration. And a "Print Text" box for pasting in anything else, like a takeoff
+performance report copied out of SimBrief's calculator, since that data isn't exposed
+through any API.
+
+Output goes either to a thermal printer over serial/COM, or to whatever's already
+installed as a Windows printer. Dark mode's in there, the window resizes down reasonably
+for smaller screens, and there's a companion [Stream Deck plugin](streamdeck-plugin/) if
+you'd rather hit a physical key than alt-tab.
 
 ## Installing
 
-Grab the latest `SimPrinter-x.y.z.msi` from the [Releases](../../releases) page and run
-it - it's a self-contained installer with no other dependencies to install first.
+`SimPrinter-x.y.z.msi` from [Releases](../../releases). Self-contained, nothing else to
+install.
 
-## Building from source
+## Building it yourself
 
-- Windows 10/11 (64-bit)
-- [Visual Studio 2022 Community](https://visualstudio.microsoft.com/) (free) with the
-  **.NET desktop development** workload, or the .NET 8 SDK standalone
-- A 58mm thermal printer that speaks ESC/POS (optional - the app works without one, you
-  just won't be able to print), connected either:
-  - via USB or paired Bluetooth (SPP profile) - shows up as a **COM port** in Device
-    Manager, or
-  - installed as a normal Windows printer via its bundled driver
-
-Open `SimPrinter.csproj` in Visual Studio and press **F5**, or from the command line:
+You'll need Windows 10/11 64-bit and either Visual Studio 2022 (Community's free, grab
+the .NET desktop development workload) or just the .NET 8 SDK on its own. Open
+`SimPrinter.csproj` and hit F5, or:
 
 ```
 dotnet build -c Release
 ```
 
-### About `lib/SimConnect/`
+A thermal printer isn't required to build or run the thing - you just won't have anything
+to print to. If you've got one, it'll either show up as a COM port (USB or paired
+Bluetooth SPP) or as a normal Windows printer through its driver.
 
-This repo vendors Microsoft's SimConnect client (`Microsoft.FlightSimulator.SimConnect.dll`
-+ `SimConnect.dll`, plus the VC++ redistributable DLLs `SimConnect.dll` itself needs) so the
-app can read the sim's Zulu clock. These are Microsoft's own redistributable SDK files, not
-something built in this repo, and they aren't covered by this project's MIT license - see
-[LICENSE](LICENSE). This is standard practice for third-party MSFS add-ons; if you'd rather
-pull them yourself, they come with the free [MSFS SDK](https://docs.flightsimulator.com/).
+One thing worth knowing: `lib/SimConnect/` has Microsoft's SimConnect client vendored in
+(the managed DLL, the native one it calls into, and the VC++ redistributable that native
+DLL needs) so the app can talk to the sim. These are Microsoft's files, not mine, and
+they're not under this repo's MIT license - see the note at the bottom of
+[LICENSE](LICENSE) if that matters to you. Same files ship with the free MSFS SDK if you'd
+rather source them yourself.
 
-## Usage
+## Using it
 
-1. **Settings**: enter your SimBrief username or numeric pilot ID, and (optionally) a
-   [SayIntentions](https://sayintentions.ai/) API key for weather/gate lookups. Choose your
-   printer connection - a COM port + baud rate, or an installed Windows printer.
-2. Back on the main screen, click **Load Flight Plan** to pull your latest SimBrief OFP.
-3. Print whichever tickets you need from the **Print** card, look up weather/gate under
-   **Get Weather**, or paste arbitrary text via **Print Text**.
+Open Settings, punch in your SimBrief username or pilot ID, optionally a SayIntentions API
+key, and pick how you're printing (COM port + baud rate, or a Windows printer from the
+dropdown). Back on the main screen, Load Flight Plan pulls the OFP, and the print buttons
+light up once it's in.
 
-### Troubleshooting printing
+A couple of printing gotchas if things don't work: for serial mode, double check the COM
+port in Device Manager (Bluetooth printers need pairing first - they show up as an
+"Outgoing" SPP port once paired). For Windows Printer mode, not every driver actually
+passes raw ESC/POS bytes through - if it silently fails, serial is usually more reliable
+for the no-name thermal printers since it skips the print spooler entirely. And if
+characters come out garbled, it's probably a code page mismatch - output's CP437 by
+default, which is the common one, but that's a one-line change in `EscPosBuilder.cs` if
+your printer wants something else.
 
-- **Serial mode not printing**: confirm the COM port in Device Manager under "Ports (COM &
-  LPT)". Bluetooth printers need to be paired first in Windows Bluetooth settings, then
-  show up as an "Outgoing" SPP COM port.
-- **Windows Printer mode fails**: not every driver supports passing raw ESC/POS bytes
-  through (the `RAW` datatype). If it fails, try Serial/COM instead - it bypasses the
-  Windows print spooler entirely, which is more reliable for generic thermal printers.
-- **Garbled characters**: output is encoded as CP437, the most common ESC/POS default.
-  If your printer uses a different code page, that's a one-line change in
-  `EscPosBuilder.cs`.
-
-## Project structure
+## Where things live
 
 ```
 SimPrinter.csproj        Project file
@@ -101,5 +90,5 @@ streamdeck-plugin/         Companion Elgato Stream Deck plugin
 
 ## License
 
-MIT - see [LICENSE](LICENSE). The vendored SimConnect files under `lib/SimConnect/` are
-Microsoft's own redistributables and are not covered by that license.
+MIT, see [LICENSE](LICENSE) - except the vendored SimConnect files under
+`lib/SimConnect/`, which are Microsoft's own redistributables.
