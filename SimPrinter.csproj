@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>SimPrinter</AssemblyName>
+    <RootNamespace>SimPrinter</RootNamespace>
+    <ApplicationIcon>SimPrinter.ico</ApplicationIcon>
+    <Version>1.1.0</Version>
+
+    <!-- Required for WinForms' auto-generated ApplicationConfiguration.Initialize() -->
+    <ApplicationVisualStyles>true</ApplicationVisualStyles>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationUseCompatibleTextRendering>false</ApplicationUseCompatibleTextRendering>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Needed to write CP437 (standard ESC/POS code page) bytes -->
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    <PackageReference Include="System.IO.Ports" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MSFS SDK2024 SimConnect client, not on NuGet - vendored from the local MSFS SDK.
+         Microsoft.FlightSimulator.SimConnect.dll is the managed wrapper; it P/Invokes into
+         the native SimConnect.dll, which must ship alongside the exe (x64, matches win-x64). -->
+    <Reference Include="Microsoft.FlightSimulator.SimConnect">
+      <HintPath>lib\SimConnect\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <None Include="lib\SimConnect\SimConnect.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SimConnect.dll</Link>
+    </None>
+
+    <!-- SimConnect.dll itself depends on the VC++ 2015-2022 x64 redistributable, which isn't
+         part of Windows and isn't guaranteed to be present on a machine that's never had
+         Visual Studio, a game, or another VC++-built app installed. Bundling these three DLLs
+         directly (vendored from System32 on a dev machine that has them) means SimPrinter has
+         no external dependency at all, rather than requiring users to install the
+         redistributable separately. -->
+    <None Include="lib\SimConnect\MSVCP140.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>MSVCP140.dll</Link>
+    </None>
+    <None Include="lib\SimConnect\VCRUNTIME140.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>VCRUNTIME140.dll</Link>
+    </None>
+    <None Include="lib\SimConnect\VCRUNTIME140_1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>VCRUNTIME140_1.dll</Link>
+    </None>
+  </ItemGroup>
+
+</Project>

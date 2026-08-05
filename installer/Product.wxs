@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package Name="SimPrinter"
+           Manufacturer="matsan000"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="CA3AE6D5-21D2-42E4-A99A-C088EB274C3B">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of SimPrinter is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="SimPrinterIcon" SourceFile="..\SimPrinter.ico" />
+    <Property Id="ARPPRODUCTICON" Value="SimPrinterIcon" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+    <ui:WixUI Id="WixUI_InstallDir" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="SimPrinter" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="ApplicationShortcut" Guid="*">
+        <Shortcut Id="StartMenuShortcut"
+                  Name="SimPrinter"
+                  Target="[INSTALLFOLDER]SimPrinter.exe"
+                  WorkingDirectory="INSTALLFOLDER"
+                  Icon="SimPrinterIcon" />
+        <RemoveFolder Id="RemoveStartMenuFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\SimPrinter" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="C:\Users\mathi\Downloads\SimPrinter\publish\**" />
+    </ComponentGroup>
+
+    <Feature Id="Main">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+
+  </Package>
+</Wix>

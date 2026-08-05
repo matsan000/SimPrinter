@@ -1,0 +1,66 @@
+{
+  "UUID": "com.simprinter.actions",
+  "Name": "SimPrinter",
+  "Version": "1.0.0",
+  "Author": "SimPrinter",
+  "Description": "Print flight plans and loadsheets from SimPrinter without leaving your Stream Deck. Requires SimPrinter to be running.",
+  "CodePath": "plugin.js",
+  "CodePathWin": "plugin.js",
+  "Icon": "imgs/category",
+  "SDKVersion": 2,
+  "Nodejs": {
+    "Version": "20"
+  },
+  "Software": {
+    "MinimumVersion": "6.4"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Category": "SimPrinter",
+  "CategoryIcon": "imgs/category",
+  "Actions": [
+    {
+      "Name": "Print Flight Plan",
+      "UUID": "com.simprinter.actions.printflightplan",
+      "Icon": "imgs/actionIcon",
+      "Tooltip": "Prints the flight plan ACARS ticket. Requires a flight plan to be loaded in SimPrinter.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keyFlightPlan",
+          "Title": ""
+        }
+      ]
+    },
+    {
+      "Name": "Print Preliminary Loadsheet",
+      "UUID": "com.simprinter.actions.printpreliminary",
+      "Icon": "imgs/actionIcon",
+      "Tooltip": "Prints the preliminary loadsheet. Requires a flight plan to be loaded in SimPrinter.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keyPreliminary",
+          "Title": ""
+        }
+      ]
+    },
+    {
+      "Name": "Print Final Loadsheet",
+      "UUID": "com.simprinter.actions.printfinal",
+      "Icon": "imgs/actionIcon",
+      "Tooltip": "Prints the final loadsheet. Requires a flight plan to be loaded in SimPrinter.",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keyFinal",
+          "Title": ""
+        }
+      ]
+    }
+  ]
+}
