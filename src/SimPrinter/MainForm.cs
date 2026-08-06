@@ -396,7 +396,9 @@ namespace SimPrinter
 
         private async void BtnGetWeather_Click(object? sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(_preferences.SiApiKey))
+            bool useVatsim = _preferences.UseVatsimWeather;
+
+            if (!useVatsim && string.IsNullOrWhiteSpace(_preferences.SiApiKey))
             {
                 MessageBox.Show(this, "Please enter your SayIntentions API key in Settings first.",
                     "Settings Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -419,7 +421,9 @@ namespace SimPrinter
 
             try
             {
-                string weatherText = await SayIntentionsClient.GetWeatherAsync(_preferences.SiApiKey, icao, atis);
+                string weatherText = useVatsim
+                    ? await (atis ? VatsimClient.GetAtisAsync(icao) : VatsimClient.GetMetarAsync(icao))
+                    : await SayIntentionsClient.GetWeatherAsync(_preferences.SiApiKey, icao, atis);
                 byte[] ticket = EscPosBuilder.BuildWeatherTicket(icao, label, weatherText);
                 PrintTicket(ticket, $"{label} for {icao}");
             }

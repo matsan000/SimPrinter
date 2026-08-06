@@ -17,7 +17,10 @@ can edit yourself (`Settings -> Edit Ticket Template`, plain text, no rebuild ne
 Preliminary and final loadsheets get generated from the same plan, and the final one can
 throw in randomized last-minute pax/cargo changes if you want a bit of realism. If you've
 got a [SayIntentions](https://sayintentions.ai/) key set up you can also pull METAR/ATIS
-or a gate assignment and print those as ACARS-style tickets.
+or a gate assignment and print those as ACARS-style tickets. Prefer VATSIM instead? Flip
+"Use VATSIM for METAR/ATIS" on in Settings and it pulls real-world METAR plus live
+controller-issued ATIS straight from VATSIM's network feed - no API key required (gate
+requests still go through SayIntentions, since VATSIM has no equivalent).
 
 There's a countdown in the footer to your scheduled off-block time, driven by SimConnect
 reading the sim's actual Zulu clock rather than your PC's clock - matters if you fly with

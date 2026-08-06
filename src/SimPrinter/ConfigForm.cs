@@ -15,6 +15,7 @@ namespace SimPrinter
 
         private readonly TextBox _txtSimBriefId = new();
         private readonly TextBox _txtSiApiKey = new();
+        private readonly RoundedSwitch _chkUseVatsimWeather = new();
         private readonly RoundedToggleButton _radSerial = new();
         private readonly RoundedToggleButton _radWindowsPrinter = new();
         private readonly ComboBox _cmbPort = new();
@@ -34,7 +35,7 @@ namespace SimPrinter
             Text = "Settings";
             Font = new Font("Segoe UI", 10f);
             BackColor = UiStyle.BackgroundColor;
-            ClientSize = new Size(560, 950);
+            ClientSize = new Size(560, 1076);
             MinimumSize = new Size(500, 350);
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -64,7 +65,7 @@ namespace SimPrinter
                 BackColor = UiStyle.BackgroundColor
             };
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 158));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 158));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 282));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 260));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 260));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -74,7 +75,7 @@ namespace SimPrinter
             BuildSimBriefContent(simBriefContent);
             root.Controls.Add(cardSimBrief, 0, 0);
 
-            var cardWeather = UiStyle.CreateCard("Weather (SayIntentions)", out Panel weatherContent);
+            var cardWeather = UiStyle.CreateCard("Weather", out Panel weatherContent);
             cardWeather.Margin = new Padding(0, 0, 0, 14);
             BuildWeatherContent(weatherContent);
             root.Controls.Add(cardWeather, 0, 1);
@@ -137,9 +138,11 @@ namespace SimPrinter
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 2,
+                RowCount = 4,
                 Margin = new Padding(0)
             };
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
@@ -155,9 +158,27 @@ namespace SimPrinter
             _txtSiApiKey.UseSystemPasswordChar = true;
             var field = UiStyle.CreateInputField(_txtSiApiKey);
             field.Dock = DockStyle.Top;
+            field.Margin = new Padding(0, 0, 0, 14);
+
+            var vatsimRow = UiStyle.CreateSwitchRow(
+                "Use VATSIM for METAR/ATIS instead (no API key needed)", _chkUseVatsimWeather);
+            vatsimRow.Margin = new Padding(0, 0, 0, 6);
+
+            var lblVatsimNote = new Label
+            {
+                Text = "VATSIM ATIS only exists while a controller is online broadcasting it. " +
+                       "Gate/parking requests always use SayIntentions.",
+                AutoSize = true,
+                MaximumSize = new Size(480, 0),
+                Font = new Font("Segoe UI", 8f),
+                ForeColor = UiStyle.MutedTextColor,
+                Margin = new Padding(2, 0, 0, 0)
+            };
 
             layout.Controls.Add(lblKey, 0, 0);
             layout.Controls.Add(field, 0, 1);
+            layout.Controls.Add(vatsimRow, 0, 2);
+            layout.Controls.Add(lblVatsimNote, 0, 3);
             content.Controls.Add(layout);
         }
 
@@ -367,6 +388,7 @@ namespace SimPrinter
 
             _chkRandomizeFinal.Checked = _preferences.RandomizeFinalLoadsheet;
             _chkDarkMode.Checked = _preferences.DarkMode;
+            _chkUseVatsimWeather.Checked = _preferences.UseVatsimWeather;
 
             UpdatePrinterModeControls();
         }
@@ -394,6 +416,7 @@ namespace SimPrinter
             _preferences.PrinterName = _cmbPrinter.SelectedItem as string;
             _preferences.RandomizeFinalLoadsheet = _chkRandomizeFinal.Checked;
             _preferences.DarkMode = _chkDarkMode.Checked;
+            _preferences.UseVatsimWeather = _chkUseVatsimWeather.Checked;
             _preferences.Save();
 
             DialogResult = DialogResult.OK;
