@@ -184,9 +184,12 @@ namespace SimPrinter
 
         /// <summary>
         /// Builds a ticket from arbitrary pasted text (e.g. a SimBrief takeoff/landing
-        /// performance report copied from its web calculator). Lines are printed as-is rather
-        /// than word-wrapped, since word-wrapping would break the alignment of tabular reports
-        /// worse than just letting the printer hardware-wrap any line over LineWidth.
+        /// performance report copied from its web calculator). Source reports like that lay
+        /// out two label/value pairs per line for on-screen reading (columns separated by runs
+        /// of 2+ spaces), which is far wider than a 58mm printer's ~32 columns - printed as-is,
+        /// the printer hardware-wraps mid-value and breaks the alignment. Lines matching that
+        /// pattern get split back into one label/value pair per line instead; anything else
+        /// (headers, single values) prints as-is, word-wrapped only if it doesn't fit.
         /// </summary>
         public static byte[] BuildPlainTextTicket(string text)
         {
@@ -194,13 +197,38 @@ namespace SimPrinter
             b.Init();
             b.AlignLeft();
 
-            foreach (var line in text.Replace("\r\n", "\n").Split('\n'))
-                b.Line(line);
+            foreach (var rawLine in text.Replace("\r\n", "\n").Split('\n'))
+            {
+                foreach (var line in ReflowColumns(rawLine))
+                    WriteWrapped(b, line);
+            }
 
             b.FeedLines(3);
             b.Cut();
 
             return b.Build();
+        }
+
+        private static readonly Regex ColumnSplitPattern = new(@"\s{2,}", RegexOptions.Compiled);
+
+        private static IEnumerable<string> ReflowColumns(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                yield return "";
+                yield break;
+            }
+
+            var tokens = ColumnSplitPattern.Split(line.Trim());
+            if (tokens.Length >= 2 && tokens.Length % 2 == 0)
+            {
+                for (int i = 0; i < tokens.Length; i += 2)
+                    yield return $"{tokens[i]} {tokens[i + 1]}";
+            }
+            else
+            {
+                yield return line.Trim();
+            }
         }
 
         private static Dictionary<string, string> BuildPlaceholderMap(SimBriefFlightPlan fp)

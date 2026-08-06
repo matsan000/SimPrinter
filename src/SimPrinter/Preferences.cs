@@ -13,6 +13,7 @@ namespace SimPrinter
         public string SiApiKey { get; set; } = "";
         public bool DarkMode { get; set; } = false;
         public bool UseVatsimWeather { get; set; } = false;
+        public bool EnableBrowserPrintServer { get; set; } = false;
 
         private static string FilePath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

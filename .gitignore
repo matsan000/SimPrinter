@@ -14,6 +14,10 @@ installer/*.wixpdb
 installer/*.zip
 installer/.wix/
 
+# Browser extension build artifact (regenerate by zipping manifest.json/*.js)
+browser-extension/*.xpi
+browser-extension/*.zip
+
 # Runtime-generated files that should never be committed
 SimBriefRaw.json
 TicketTemplate.txt

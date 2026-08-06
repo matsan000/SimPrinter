@@ -304,6 +304,7 @@ namespace SimPrinter
             var header = new Label
             {
                 Text = title,
+                UseMnemonic = false,
                 AutoSize = true,
                 Font = new Font("Segoe UI", 11f, FontStyle.Bold),
                 ForeColor = TextColor,

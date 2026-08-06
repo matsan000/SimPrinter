@@ -24,6 +24,7 @@ namespace SimPrinter
         private readonly RoundedButton _btnRefresh = new();
         private readonly RoundedSwitch _chkRandomizeFinal = new();
         private readonly RoundedSwitch _chkDarkMode = new();
+        private readonly RoundedSwitch _chkBrowserPrintServer = new();
         private readonly RoundedButton _btnEditTemplate = new();
         private readonly RoundedButton _btnSave = new();
         private readonly RoundedButton _btnCancel = new();
@@ -35,7 +36,7 @@ namespace SimPrinter
             Text = "Settings";
             Font = new Font("Segoe UI", 10f);
             BackColor = UiStyle.BackgroundColor;
-            ClientSize = new Size(560, 1076);
+            ClientSize = new Size(560, 600);
             MinimumSize = new Size(500, 350);
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
@@ -66,8 +67,7 @@ namespace SimPrinter
             };
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 158));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 282));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 260));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 260));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 570));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             var cardSimBrief = UiStyle.CreateCard("SimBrief", out Panel simBriefContent);
@@ -80,17 +80,12 @@ namespace SimPrinter
             BuildWeatherContent(weatherContent);
             root.Controls.Add(cardWeather, 0, 1);
 
-            var cardFlightPlan = UiStyle.CreateCard("Flight Plan", out Panel flightPlanContent);
-            cardFlightPlan.Margin = new Padding(0, 0, 0, 14);
-            BuildFlightPlanContent(flightPlanContent);
-            root.Controls.Add(cardFlightPlan, 0, 2);
+            var cardPrinterGeneral = UiStyle.CreateCard("Printer & General Settings", out Panel printerGeneralContent);
+            cardPrinterGeneral.Margin = new Padding(0, 0, 0, 14);
+            BuildPrinterAndGeneralContent(printerGeneralContent);
+            root.Controls.Add(cardPrinterGeneral, 0, 2);
 
-            var cardPrinter = UiStyle.CreateCard("Printer", out Panel printerContent);
-            cardPrinter.Margin = new Padding(0, 0, 0, 14);
-            BuildPrinterContent(printerContent);
-            root.Controls.Add(cardPrinter, 0, 3);
-
-            root.Controls.Add(BuildFooter(), 0, 4);
+            root.Controls.Add(BuildFooter(), 0, 3);
 
             var scrollHost = new Panel
             {
@@ -182,51 +177,20 @@ namespace SimPrinter
             content.Controls.Add(layout);
         }
 
-        private void BuildFlightPlanContent(Panel content)
+        private void BuildPrinterAndGeneralContent(Panel content)
         {
             var layout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 3,
-                Margin = new Padding(0)
-            };
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-            var randomizeRow = UiStyle.CreateSwitchRow(
-                "Simulate last-minute pax/cargo changes on final loadsheet", _chkRandomizeFinal);
-            randomizeRow.Margin = new Padding(0, 0, 0, 6);
-
-            var darkModeRow = UiStyle.CreateSwitchRow(
-                "Dark theme (restart required to apply)", _chkDarkMode);
-            darkModeRow.Margin = new Padding(0, 0, 0, 16);
-
-            _btnEditTemplate.Text = "Edit Ticket Template";
-            _btnEditTemplate.Dock = DockStyle.Top;
-            _btnEditTemplate.Height = 40;
-            _btnEditTemplate.Margin = new Padding(0);
-            _btnEditTemplate.Click += BtnEditTemplate_Click;
-            UiStyle.StyleSecondaryButton(_btnEditTemplate);
-
-            layout.Controls.Add(randomizeRow, 0, 0);
-            layout.Controls.Add(darkModeRow, 0, 1);
-            layout.Controls.Add(_btnEditTemplate, 0, 2);
-
-            content.Controls.Add(layout);
-        }
-
-        private void BuildPrinterContent(Panel content)
-        {
-            var layout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 4,
+                RowCount = 8,
                 Margin = new Padding(0)
             };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -304,9 +268,45 @@ namespace SimPrinter
             printerRow.Controls.Add(_cmbPrinter, 0, 0);
             printerRow.Controls.Add(_btnRefresh, 1, 0);
 
+            var browserServerRow = UiStyle.CreateSwitchRow(
+                "Allow the SimPrinter browser extension to print", _chkBrowserPrintServer);
+            browserServerRow.Margin = new Padding(0, 14, 0, 6);
+
+            var lblBrowserServerNote = new Label
+            {
+                Text = "Runs a small local-only server (127.0.0.1, no internet access) so the " +
+                       "extension can send things like a SimBrief performance calculation straight " +
+                       "to this printer.",
+                AutoSize = true,
+                MaximumSize = new Size(480, 0),
+                Font = new Font("Segoe UI", 8f),
+                ForeColor = UiStyle.MutedTextColor,
+                Margin = new Padding(2, 0, 0, 0)
+            };
+
+            var randomizeRow = UiStyle.CreateSwitchRow(
+                "Simulate last-minute pax/cargo changes on final loadsheet", _chkRandomizeFinal);
+            randomizeRow.Margin = new Padding(0, 24, 0, 6);
+
+            var darkModeRow = UiStyle.CreateSwitchRow(
+                "Dark theme (restart required to apply)", _chkDarkMode);
+            darkModeRow.Margin = new Padding(0, 0, 0, 16);
+
+            _btnEditTemplate.Text = "Edit Ticket Template";
+            _btnEditTemplate.Dock = DockStyle.Top;
+            _btnEditTemplate.Height = 40;
+            _btnEditTemplate.Margin = new Padding(0);
+            _btnEditTemplate.Click += BtnEditTemplate_Click;
+            UiStyle.StyleSecondaryButton(_btnEditTemplate);
+
             layout.Controls.Add(printerModeToggle, 0, 0);
             layout.Controls.Add(portRow, 0, 1);
             layout.Controls.Add(printerRow, 0, 2);
+            layout.Controls.Add(browserServerRow, 0, 3);
+            layout.Controls.Add(lblBrowserServerNote, 0, 4);
+            layout.Controls.Add(randomizeRow, 0, 5);
+            layout.Controls.Add(darkModeRow, 0, 6);
+            layout.Controls.Add(_btnEditTemplate, 0, 7);
 
             content.Controls.Add(layout);
         }
@@ -389,6 +389,7 @@ namespace SimPrinter
             _chkRandomizeFinal.Checked = _preferences.RandomizeFinalLoadsheet;
             _chkDarkMode.Checked = _preferences.DarkMode;
             _chkUseVatsimWeather.Checked = _preferences.UseVatsimWeather;
+            _chkBrowserPrintServer.Checked = _preferences.EnableBrowserPrintServer;
 
             UpdatePrinterModeControls();
         }
@@ -417,6 +418,7 @@ namespace SimPrinter
             _preferences.RandomizeFinalLoadsheet = _chkRandomizeFinal.Checked;
             _preferences.DarkMode = _chkDarkMode.Checked;
             _preferences.UseVatsimWeather = _chkUseVatsimWeather.Checked;
+            _preferences.EnableBrowserPrintServer = _chkBrowserPrintServer.Checked;
             _preferences.Save();
 
             DialogResult = DialogResult.OK;

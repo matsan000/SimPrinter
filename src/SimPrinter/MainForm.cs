@@ -17,6 +17,7 @@ namespace SimPrinter
         private readonly Label _lblOffBlock = new();
         private readonly Preferences _preferences = Preferences.Load();
         private readonly SimConnectClient _simConnect = new();
+        private readonly LocalPrintServer _printServer = new();
         private Panel _cardActions = null!;
         private Panel _actionsContent = null!;
 
@@ -39,6 +40,23 @@ namespace SimPrinter
 
             BuildUi();
             StartSimConnect();
+            StartPrintServer();
+        }
+
+        /// <summary>
+        /// Opt-in localhost server that lets the SimPrinter browser extension print text
+        /// (e.g. a SimBrief performance calculation) with one click. See LocalPrintServer.
+        /// </summary>
+        private void StartPrintServer()
+        {
+            _printServer.OnPrintTextRequested = text => BeginInvoke(new Action(() =>
+            {
+                var ticket = EscPosBuilder.BuildPlainTextTicket(text);
+                PrintTicket(ticket, "browser performance calculation");
+            }));
+
+            if (_preferences.EnableBrowserPrintServer)
+                _printServer.Start();
         }
 
         /// <summary>
@@ -87,6 +105,7 @@ namespace SimPrinter
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
+            _printServer.Dispose();
             _simConnect.Dispose();
             base.OnFormClosed(e);
         }
@@ -341,6 +360,11 @@ namespace SimPrinter
             using var dlg = new ConfigForm(_preferences);
             if (dlg.ShowDialog(this) == DialogResult.OK)
             {
+                if (_preferences.EnableBrowserPrintServer)
+                    _printServer.Start();
+                else
+                    _printServer.Stop();
+
                 _lblStatus.ForeColor = UiStyle.SuccessColor;
                 _lblStatus.Text = "Settings saved.";
             }
