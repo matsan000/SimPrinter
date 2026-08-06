@@ -102,9 +102,7 @@ fit your printer's width and prints it, the same way Print Text does.
    **"Install Add-on From File..."**, and pick the `.xpi` you downloaded. (Dragging the
    file into a Firefox window works too.)
 
-That's it - no developer mode, no "temporary" reinstall-on-every-restart needed. It's
-signed by Mozilla (self-distributed, not published to the store), so it installs and stays
-installed like any other extension.
+For now i only made a firefox addon, but if people would like i can make one for google chrome aswell, join the discord or send me a message on flightsi.to 
 
 Once it's in, open a Takeoff or Landing Performance calculation on SimBrief and the Print
 button shows up next to "Information" (or next to the Formatted/Raw Output toggle on the
