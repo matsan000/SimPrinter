@@ -25,6 +25,7 @@ namespace SimPrinter
         private readonly RoundedSwitch _chkRandomizeFinal = new();
         private readonly RoundedSwitch _chkDarkMode = new();
         private readonly RoundedSwitch _chkBrowserPrintServer = new();
+        private readonly RoundedSwitch _chkAutoPrintOoOi = new();
         private readonly RoundedButton _btnEditTemplate = new();
         private readonly RoundedButton _btnSave = new();
         private readonly RoundedButton _btnCancel = new();
@@ -67,7 +68,7 @@ namespace SimPrinter
             };
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 158));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 282));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 570));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 690));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             var cardSimBrief = UiStyle.CreateCard("SimBrief", out Panel simBriefContent);
@@ -183,10 +184,12 @@ namespace SimPrinter
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 8,
+                RowCount = 10,
                 Margin = new Padding(0)
             };
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -288,6 +291,23 @@ namespace SimPrinter
                 "Simulate last-minute pax/cargo changes on final loadsheet", _chkRandomizeFinal);
             randomizeRow.Margin = new Padding(0, 24, 0, 6);
 
+            var autoPrintOoOiRow = UiStyle.CreateSwitchRow(
+                "Automatically print an OOOI report on engine shutdown", _chkAutoPrintOoOi);
+            autoPrintOoOiRow.Margin = new Padding(0, 0, 0, 6);
+
+            var lblAutoPrintOoOiNote = new Label
+            {
+                Text = "Prints a summary automatically once both engines shut down after landing. " +
+                       "Off by default so touch-and-gos and training flights don't print one every " +
+                       "circuit. This only controls the automatic print - the \"Print OOOI Summary\" " +
+                       "button on the main screen always works regardless of this setting.",
+                AutoSize = true,
+                MaximumSize = new Size(480, 0),
+                Font = new Font("Segoe UI", 8f),
+                ForeColor = UiStyle.MutedTextColor,
+                Margin = new Padding(2, 0, 0, 16)
+            };
+
             var darkModeRow = UiStyle.CreateSwitchRow(
                 "Dark theme (restart required to apply)", _chkDarkMode);
             darkModeRow.Margin = new Padding(0, 0, 0, 16);
@@ -305,8 +325,10 @@ namespace SimPrinter
             layout.Controls.Add(browserServerRow, 0, 3);
             layout.Controls.Add(lblBrowserServerNote, 0, 4);
             layout.Controls.Add(randomizeRow, 0, 5);
-            layout.Controls.Add(darkModeRow, 0, 6);
-            layout.Controls.Add(_btnEditTemplate, 0, 7);
+            layout.Controls.Add(autoPrintOoOiRow, 0, 6);
+            layout.Controls.Add(lblAutoPrintOoOiNote, 0, 7);
+            layout.Controls.Add(darkModeRow, 0, 8);
+            layout.Controls.Add(_btnEditTemplate, 0, 9);
 
             content.Controls.Add(layout);
         }
@@ -390,6 +412,7 @@ namespace SimPrinter
             _chkDarkMode.Checked = _preferences.DarkMode;
             _chkUseVatsimWeather.Checked = _preferences.UseVatsimWeather;
             _chkBrowserPrintServer.Checked = _preferences.EnableBrowserPrintServer;
+            _chkAutoPrintOoOi.Checked = _preferences.AutoPrintOoOiReport;
 
             UpdatePrinterModeControls();
         }
@@ -419,6 +442,7 @@ namespace SimPrinter
             _preferences.DarkMode = _chkDarkMode.Checked;
             _preferences.UseVatsimWeather = _chkUseVatsimWeather.Checked;
             _preferences.EnableBrowserPrintServer = _chkBrowserPrintServer.Checked;
+            _preferences.AutoPrintOoOiReport = _chkAutoPrintOoOi.Checked;
             _preferences.Save();
 
             DialogResult = DialogResult.OK;

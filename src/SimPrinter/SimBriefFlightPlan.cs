@@ -52,11 +52,6 @@ namespace SimPrinter
         public string SchedOutZulu { get; set; } = "N/A";
         public string SchedInZulu { get; set; } = "N/A";
 
-        /// <summary>Scheduled off-block time as seconds-since-midnight Zulu, for comparing
-        /// against the sim clock's own "ZULU TIME" simvar (also seconds-since-midnight).
-        /// Null if SimBrief didn't provide a scheduled out time.</summary>
-        public int? SchedOutSecondsOfDayUtc { get; set; }
-
         public static SimBriefFlightPlan FromJson(JsonDocument doc)
         {
             var root = doc.RootElement;
@@ -110,15 +105,8 @@ namespace SimPrinter
             fp.FlightTimeFormatted = FormatDurationSeconds(estSeconds);
 
             // Scheduled out/in: epoch seconds -> "HH:mm Z"
-            var schedOutStr = GetProp(root, "times", "sched_out");
-            fp.SchedOutZulu = FormatEpochZulu(schedOutStr);
+            fp.SchedOutZulu = FormatEpochZulu(GetProp(root, "times", "sched_out"));
             fp.SchedInZulu = FormatEpochZulu(GetProp(root, "times", "sched_in"));
-
-            if (long.TryParse(schedOutStr, out long schedOutEpoch) && schedOutEpoch > 0)
-            {
-                var schedOutUtc = DateTimeOffset.FromUnixTimeSeconds(schedOutEpoch).UtcDateTime;
-                fp.SchedOutSecondsOfDayUtc = (int)schedOutUtc.TimeOfDay.TotalSeconds;
-            }
 
             return fp;
         }

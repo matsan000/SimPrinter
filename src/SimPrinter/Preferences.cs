@@ -14,6 +14,7 @@ namespace SimPrinter
         public bool DarkMode { get; set; } = false;
         public bool UseVatsimWeather { get; set; } = false;
         public bool EnableBrowserPrintServer { get; set; } = false;
+        public bool AutoPrintOoOiReport { get; set; } = false;
 
         private static string FilePath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

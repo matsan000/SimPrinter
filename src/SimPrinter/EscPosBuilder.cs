@@ -182,6 +182,80 @@ namespace SimPrinter
             return b.Build();
         }
 
+        /// <summary>Pre-formatted fields for <see cref="BuildOoOiTicket"/> - callers assemble
+        /// these from the loaded flight plan plus an OoOiTimestamps, since formatting (e.g.
+        /// picking a callsign fallback, generating the message ID) doesn't belong in the
+        /// printer-facing builder itself.</summary>
+        public readonly record struct OoOiReport(
+            string Callsign,
+            string Registration,
+            string Date,
+            string OriginIcao,
+            string DestIcao,
+            string Out,
+            string Off,
+            string On,
+            string In,
+            string BlockTime,
+            string FlightTime,
+            string PaxCount,
+            string MessageId);
+
+        /// <summary>
+        /// Builds an OOOI (Out/Off/On/In) summary ticket, printed automatically once both
+        /// engines shut down after landing - see OoOiTracker for how the timestamps are
+        /// captured. Uses a fixed 8-character label column rather than the right-aligned
+        /// KeyValue layout the other tickets use, matching real airline OOOI hardcopy format.
+        /// </summary>
+        public static byte[] BuildOoOiTicket(OoOiReport r)
+        {
+            var b = new EscPosBuilder();
+            b.Init();
+
+            b.AlignCenter();
+            b.Bold(true);
+            b.Line("ACARS MESSAGE");
+            b.Line("OOOI REPORT");
+            b.Bold(false);
+            b.AlignLeft();
+            b.Divider();
+
+            b.Line(Row("FLT", r.Callsign));
+            b.Line(Row("REG", r.Registration));
+            b.Line(Row("DATE", r.Date));
+            b.Line(Row("ORIGIN", r.OriginIcao));
+            b.Line(Row("DEST", r.DestIcao));
+            b.Divider();
+
+            b.Line(Row("OUT", r.Out));
+            b.Line(Row("OFF", r.Off));
+            b.Line(Row("ON", r.On));
+            b.Line(Row("IN", r.In));
+            b.Divider();
+
+            b.Line(Row("BLOCK", r.BlockTime));
+            b.Line(Row("FLIGHT", r.FlightTime));
+            b.Divider();
+
+            b.Line(Row("PAX", r.PaxCount));
+            b.Divider();
+
+            b.Line(Row("MSG ID", r.MessageId));
+            b.Line(Row("ACARS", "OOOI"));
+            b.Divider();
+
+            b.AlignCenter();
+            b.Line("END OF MESSAGE");
+            b.AlignLeft();
+
+            b.FeedLines(3);
+            b.Cut();
+
+            return b.Build();
+        }
+
+        private static string Row(string label, string value) => label.PadRight(8) + value;
+
         /// <summary>
         /// Builds a ticket from arbitrary pasted text (e.g. a SimBrief takeoff/landing
         /// performance report copied from its web calculator). Source reports like that lay

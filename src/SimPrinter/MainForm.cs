@@ -8,22 +8,23 @@ namespace SimPrinter
         private readonly RoundedButton _btnPrintFlightPlan = new();
         private readonly RoundedButton _btnPrintPrelim = new();
         private readonly RoundedButton _btnPrintFinal = new();
+        private readonly RoundedButton _btnPrintOoOi = new();
         private readonly TextBox _txtIcao = new();
         private readonly RoundedToggleButton _radMetar = new();
         private readonly RoundedToggleButton _radAtis = new();
         private readonly RoundedButton _btnGetWeather = new();
         private readonly RoundedButton _btnRequestGate = new();
         private readonly Label _lblStatus = new();
-        private readonly Label _lblOffBlock = new();
+        private readonly Label _lblOoOiStatus = new();
         private readonly Preferences _preferences = Preferences.Load();
         private readonly SimConnectClient _simConnect = new();
         private readonly LocalPrintServer _printServer = new();
+        private readonly OoOiTracker _ooOiTracker = new();
         private Panel _cardActions = null!;
         private Panel _actionsContent = null!;
 
         private SimBriefFlightPlan? _currentPlan;
         private LoadsheetGenerator.LoadsheetValues? _finalLoadsheetValues;
-        private double? _latestZuluSeconds;
 
         public MainForm()
         {
@@ -60,47 +61,71 @@ namespace SimPrinter
         }
 
         /// <summary>
-        /// Shows a live countdown to the flight plan's scheduled off-block time, driven by the
-        /// sim's own Zulu clock (rather than the PC's system clock) so it stays correct if the
-        /// user runs the sim with time acceleration or a non-real-time sim clock.
+        /// Feeds SimConnect's per-second flight state into OoOiTracker and keeps the footer's
+        /// Out/Off/On/In display current as each event happens.
         /// </summary>
         private void StartSimConnect()
         {
-            _simConnect.ZuluSecondsUpdated += seconds =>
+            _simConnect.FlightStateUpdated += state =>
             {
-                _latestZuluSeconds = seconds;
-                RefreshOffBlockLabel();
+                _ooOiTracker.Update(state);
+                RefreshOoOiStatusLabel();
             };
-            _simConnect.Disconnected += () =>
-            {
-                _latestZuluSeconds = null;
-                RefreshOffBlockLabel();
-            };
-            RefreshOffBlockLabel();
+            _ooOiTracker.Completed += OnOoOiCompleted;
+            RefreshOoOiStatusLabel();
         }
 
-        private void RefreshOffBlockLabel()
+        /// <summary>
+        /// Fires once OoOiTracker sees both engines shut down after landing. Only auto-prints
+        /// when the setting is on; needs a loaded flight plan for the static fields (callsign,
+        /// registration, PAX, etc.), so it's silently skipped without one rather than erroring
+        /// out on what would otherwise be an unattended background event. The manual "Print
+        /// OOOI Summary" button (BtnPrintOoOi_Click) shares BuildOoOiReport but isn't gated by
+        /// the auto-print setting at all - that setting only controls this automatic trigger.
+        /// </summary>
+        private void OnOoOiCompleted(OoOiProgress progress)
         {
-            if (_currentPlan?.SchedOutSecondsOfDayUtc is not int schedOutSeconds)
-            {
-                _lblOffBlock.Text = "";
-                return;
-            }
+            if (!_preferences.AutoPrintOoOiReport || _currentPlan == null) return;
 
-            if (_latestZuluSeconds is not double nowSeconds)
-            {
-                _lblOffBlock.Text = "Off-block: waiting for simulator...";
-                return;
-            }
+            var report = BuildOoOiReport(_currentPlan, progress);
+            var ticket = EscPosBuilder.BuildOoOiTicket(report);
+            PrintTicket(ticket, "OOOI report");
+        }
 
-            double diff = schedOutSeconds - nowSeconds;
-            if (diff < -43200) diff += 86400; // scheduled time has already rolled past local midnight
+        private static EscPosBuilder.OoOiReport BuildOoOiReport(SimBriefFlightPlan plan, OoOiProgress p)
+        {
+            return new EscPosBuilder.OoOiReport(
+                Callsign: plan.Callsign,
+                Registration: plan.AircraftReg,
+                Date: p.Date is DateOnly d ? d.ToString("ddMMMyy").ToUpperInvariant() : "N/A",
+                OriginIcao: plan.OriginIcao,
+                DestIcao: plan.DestIcao,
+                Out: FormatZulu(p.OutSeconds),
+                Off: FormatZulu(p.OffSeconds),
+                On: FormatZulu(p.OnSeconds),
+                In: FormatZulu(p.InSeconds),
+                BlockTime: FormatDuration(p.OutSeconds, p.InSeconds),
+                FlightTime: FormatDuration(p.OffSeconds, p.OnSeconds),
+                PaxCount: plan.PaxCount,
+                MessageId: Guid.NewGuid().ToString("N")[..6].ToUpperInvariant());
+        }
 
-            var span = TimeSpan.FromSeconds(Math.Abs(diff));
-            var formatted = span.ToString(@"hh\:mm\:ss");
-            _lblOffBlock.Text = diff >= 0
-                ? $"Off-block in {formatted}"
-                : $"Off-block was {formatted} ago";
+        private static string FormatZulu(double? secondsOfDay) =>
+            secondsOfDay is double s ? $"{TimeSpan.FromSeconds(s):hh\\:mm}Z" : "N/A";
+
+        private static string FormatDuration(double? fromSeconds, double? toSeconds)
+        {
+            if (fromSeconds is not double from || toSeconds is not double to) return "N/A";
+            double diff = to - from;
+            if (diff < 0) diff += 86400; // midnight rollover
+            return TimeSpan.FromSeconds(diff).ToString(@"hh\:mm");
+        }
+
+        private void RefreshOoOiStatusLabel()
+        {
+            var p = _ooOiTracker.Current;
+            _lblOoOiStatus.Text = $"OUT {FormatZulu(p.OutSeconds)}  OFF {FormatZulu(p.OffSeconds)}  " +
+                                   $"ON {FormatZulu(p.OnSeconds)}  IN {FormatZulu(p.InSeconds)}";
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -112,7 +137,7 @@ namespace SimPrinter
 
         private void BuildUi()
         {
-            // The footer (Settings + off-block countdown) is a direct child of the form with
+            // The footer (Settings + Out/Off/On/In status) is a direct child of the form with
             // Dock=Bottom, not part of the scrollable content below - that's what keeps it
             // pinned to the bottom of the window instead of just trailing after the Print
             // card, which would otherwise leave it floating awkwardly on a taller window.
@@ -142,10 +167,10 @@ namespace SimPrinter
             // CreateCard defaults to Dock=Fill, which is ambiguous when placed in an AutoSize
             // row (WinForms can't ask "what's your preferred size" of a Fill-docked control).
             // An explicit Height + Dock=Top sidesteps that - matches the card's real content:
-            // padding(36) + header(~37) + ICAO label(~25) + input row(54) + 5 buttons at 40px
+            // padding(36) + header(~37) + ICAO label(~25) + input row(54) + 6 buttons at 40px
             // with 10px gaps between them.
             _cardActions.Dock = DockStyle.Top;
-            _cardActions.Height = 406;
+            _cardActions.Height = 456;
             _cardActions.Margin = new Padding(0, 14, 0, 14);
             BuildActionsContent(_actionsContent);
             SetFlightPlanActionsEnabled(false);
@@ -207,11 +232,12 @@ namespace SimPrinter
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 7,
+                RowCount = 8,
                 Margin = new Padding(0)
             };
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -293,6 +319,13 @@ namespace SimPrinter
             _btnPrintFinal.Click += BtnPrintFinal_Click;
             UiStyle.StyleSecondaryButton(_btnPrintFinal);
 
+            _btnPrintOoOi.Text = "Print OOOI Summary (After Flight)";
+            _btnPrintOoOi.Dock = DockStyle.Fill;
+            _btnPrintOoOi.Height = 40;
+            _btnPrintOoOi.Margin = new Padding(0);
+            _btnPrintOoOi.Click += BtnPrintOoOi_Click;
+            UiStyle.StyleSecondaryButton(_btnPrintOoOi);
+
             layout.Controls.Add(lblIcao, 0, 0);
             layout.Controls.Add(inputRow, 0, 1);
             layout.Controls.Add(_btnGetWeather, 0, 2);
@@ -300,6 +333,7 @@ namespace SimPrinter
             layout.Controls.Add(_btnPrintFlightPlan, 0, 4);
             layout.Controls.Add(_btnPrintPrelim, 0, 5);
             layout.Controls.Add(_btnPrintFinal, 0, 6);
+            layout.Controls.Add(_btnPrintOoOi, 0, 7);
 
             content.Controls.Add(layout);
         }
@@ -309,6 +343,7 @@ namespace SimPrinter
             _btnPrintFlightPlan.Enabled = enabled;
             _btnPrintPrelim.Enabled = enabled;
             _btnPrintFinal.Enabled = enabled;
+            _btnPrintOoOi.Enabled = enabled;
         }
 
         private Control BuildFooter()
@@ -333,10 +368,11 @@ namespace SimPrinter
             _btnSettings.Click += BtnSettings_Click;
             UiStyle.StyleSecondaryButton(_btnSettings, UiStyle.BackgroundColor);
 
-            _lblOffBlock.Dock = DockStyle.Fill;
-            _lblOffBlock.TextAlign = ContentAlignment.MiddleRight;
-            _lblOffBlock.ForeColor = UiStyle.MutedTextColor;
-            _lblOffBlock.Margin = new Padding(0, 0, 10, 0);
+            _lblOoOiStatus.Dock = DockStyle.Fill;
+            _lblOoOiStatus.TextAlign = ContentAlignment.MiddleRight;
+            _lblOoOiStatus.ForeColor = UiStyle.MutedTextColor;
+            _lblOoOiStatus.Font = new Font("Segoe UI", 9f);
+            _lblOoOiStatus.Margin = new Padding(0, 0, 10, 0);
 
             // Doesn't need a flight plan loaded, unlike the three buttons in the Print card -
             // see SetFlightPlanActionsEnabled, which only touches those three individually.
@@ -349,7 +385,7 @@ namespace SimPrinter
             UiStyle.StyleSecondaryButton(_btnPrintText, UiStyle.BackgroundColor);
 
             footer.Controls.Add(_btnSettings, 0, 0);
-            footer.Controls.Add(_lblOffBlock, 1, 0);
+            footer.Controls.Add(_lblOoOiStatus, 1, 0);
             footer.Controls.Add(_btnPrintText, 2, 0);
 
             return footer;
@@ -398,13 +434,14 @@ namespace SimPrinter
             {
                 var plan = await SimBriefClient.FetchLatestAsync(_preferences.SimBriefId);
                 _currentPlan = plan;
+                _ooOiTracker.Reset();
+                RefreshOoOiStatusLabel();
                 _finalLoadsheetValues = _preferences.RandomizeFinalLoadsheet
                     ? LoadsheetGenerator.BuildFinalValues(plan, new Random())
                     : LoadsheetGenerator.BuildPreliminaryValues(plan);
                 SetFlightPlanActionsEnabled(true);
                 _lblStatus.ForeColor = UiStyle.SuccessColor;
                 _lblStatus.Text = $"Loaded: {plan.OriginIcao} -> {plan.DestIcao} ({plan.Callsign})";
-                RefreshOffBlockLabel();
             }
             catch (Exception ex)
             {
@@ -520,6 +557,19 @@ namespace SimPrinter
             if (_currentPlan == null || _finalLoadsheetValues == null) return;
             byte[] ticket = LoadsheetGenerator.BuildTicket(_currentPlan, "FINAL", _finalLoadsheetValues);
             PrintTicket(ticket, "final loadsheet");
+        }
+
+        /// <summary>
+        /// Prints whatever Out/Off/On/In is known right now, with "N/A" for anything that
+        /// hasn't happened yet - independent of the "auto-print on shutdown" Settings toggle,
+        /// which only governs the automatic trigger in OnOoOiCompleted.
+        /// </summary>
+        private void BtnPrintOoOi_Click(object? sender, EventArgs e)
+        {
+            if (_currentPlan == null) return;
+            var report = BuildOoOiReport(_currentPlan, _ooOiTracker.Current);
+            var ticket = EscPosBuilder.BuildOoOiTicket(report);
+            PrintTicket(ticket, "OOOI summary");
         }
 
         private void PrintTicket(byte[] ticket, string description)
