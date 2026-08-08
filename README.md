@@ -22,11 +22,18 @@ or a gate assignment and print those as ACARS-style tickets. Prefer VATSIM inste
 controller-issued ATIS straight from VATSIM's network feed - no API key required (gate
 requests still go through SayIntentions, since VATSIM has no equivalent).
 
-There's a countdown in the footer to your scheduled off-block time, driven by SimConnect
-reading the sim's actual Zulu clock rather than your PC's clock - matters if you fly with
-time acceleration. And a "Print Text" box for pasting in anything else, like a takeoff
-performance report copied out of SimBrief's calculator, since that data isn't exposed
-through any API - or skip the copy/paste entirely with the [Firefox extension](#firefox-extension-simbrief-performance-print)
+SimConnect also tracks OOOI - Out, Off, On, In - for the loaded flight: pushback, wheels
+up, wheels down, and engines off, each timestamped against the sim's own Zulu clock rather
+than your PC's (matters if you fly with time acceleration). The footer shows all four live,
+"N/A" until each one actually happens. Hit "Print OOOI Summary" any time after landing to
+print whatever's known so far, or flip on "Automatically print an OOOI report on engine
+shutdown" in Settings to have it print itself once both engines shut down - it waits 5
+seconds on the ground before confirming a landing, so a touch-and-go doesn't print one
+every circuit.
+
+And a "Print Text" box for pasting in anything else, like a takeoff performance report
+copied out of SimBrief's calculator, since that data isn't exposed through any API - or
+skip the copy/paste entirely with the [Firefox extension](#firefox-extension-simbrief-performance-print)
 below, which adds a Print button right on SimBrief's own page.
 
 Output goes either to a thermal printer over serial/COM, or to whatever's already
@@ -121,7 +128,8 @@ src/SimPrinter/
   SimBriefFlightPlan.cs        Flight plan data model + JSON parsing
   SimBriefClient.cs            Calls the SimBrief API
   SayIntentionsClient.cs       Weather/gate lookups
-  SimConnectClient.cs          Reads the sim's Zulu clock via SimConnect
+  SimConnectClient.cs          Polls SimConnect for Zulu time, ground state, and engine data
+  OoOiTracker.cs                Detects Out/Off/On/In from the live SimConnect state
   LoadsheetGenerator.cs        Builds preliminary/final loadsheet values and tickets
   EscPosBuilder.cs             Builds ESC/POS byte sequences and ticket layouts
   TicketTemplate.cs            User-editable flight-plan ticket template
