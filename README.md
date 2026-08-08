@@ -27,9 +27,7 @@ up, wheels down, and engines off, each timestamped against the sim's own Zulu cl
 than your PC's (matters if you fly with time acceleration). The footer shows all four live,
 "N/A" until each one actually happens. Hit "Print OOOI Summary" any time after landing to
 print whatever's known so far, or flip on "Automatically print an OOOI report on engine
-shutdown" in Settings to have it print itself once both engines shut down - it waits 5
-seconds on the ground before confirming a landing, so a touch-and-go doesn't print one
-every circuit.
+shutdown" in Settings to have it print itself once both engines shut down 
 
 And a "Print Text" box for pasting in anything else, like a takeoff performance report
 copied out of SimBrief's calculator, since that data isn't exposed through any API - or
