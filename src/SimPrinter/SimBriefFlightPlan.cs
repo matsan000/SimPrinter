@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace SimPrinter
@@ -161,7 +162,7 @@ namespace SimPrinter
             if (long.TryParse(epochStr, out long epoch) && epoch > 0)
             {
                 var dt = DateTimeOffset.FromUnixTimeSeconds(epoch).UtcDateTime;
-                return dt.ToString("HH:mm") + "Z";
+                return dt.ToString("HH:mm", CultureInfo.InvariantCulture) + "Z";
             }
             return "N/A";
         }

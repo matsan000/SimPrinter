@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace SimPrinter
 {
     public class MainForm : Form
@@ -97,7 +99,7 @@ namespace SimPrinter
             return new EscPosBuilder.OoOiReport(
                 Callsign: plan.Callsign,
                 Registration: plan.AircraftReg,
-                Date: p.Date is DateOnly d ? d.ToString("ddMMMyy").ToUpperInvariant() : "N/A",
+                Date: p.Date is DateOnly d ? d.ToString("ddMMMyy", CultureInfo.InvariantCulture).ToUpperInvariant() : "N/A",
                 OriginIcao: plan.OriginIcao,
                 DestIcao: plan.DestIcao,
                 Out: FormatZulu(p.OutSeconds),
@@ -111,14 +113,16 @@ namespace SimPrinter
         }
 
         private static string FormatZulu(double? secondsOfDay) =>
-            secondsOfDay is double s ? $"{TimeSpan.FromSeconds(s):hh\\:mm}Z" : "N/A";
+            secondsOfDay is double s
+                ? TimeSpan.FromSeconds(s).ToString(@"hh\:mm", CultureInfo.InvariantCulture) + "Z"
+                : "N/A";
 
         private static string FormatDuration(double? fromSeconds, double? toSeconds)
         {
             if (fromSeconds is not double from || toSeconds is not double to) return "N/A";
             double diff = to - from;
             if (diff < 0) diff += 86400; // midnight rollover
-            return TimeSpan.FromSeconds(diff).ToString(@"hh\:mm");
+            return TimeSpan.FromSeconds(diff).ToString(@"hh\:mm", CultureInfo.InvariantCulture);
         }
 
         private void RefreshOoOiStatusLabel()
