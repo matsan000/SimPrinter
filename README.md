@@ -93,6 +93,10 @@ sends the result straight to your printer. (The SimCallouts option is for
 [SimCallouts](https://github.com/matsan000/SimCallouts), a separate companion app that
 speaks V-speed callouts - only relevant if you use that too.)
 
+<p>
+  <img src="assets/screenshots/extension-send-to.png" width="420" alt="Send to: SimPrinter / SimCallouts choice on SimBrief's Takeoff Performance calculator">
+</p>
+
 It works by having SimPrinter run a small server on `127.0.0.1` (localhost only - nothing
 outside your own machine can reach it, and it's off by default). The extension reads the
 calculation text already sitting on the page and posts it there; SimPrinter reflows it to
