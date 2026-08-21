@@ -1,5 +1,7 @@
 # SimPrinter
 
+[![Discord](https://img.shields.io/badge/Discord-Join%20the%20server-5865F2?logo=discord&logoColor=white)](https://discord.gg/Qpxg4tZCc8)
+
 Pulls your SimBrief flight plan and prints it to a real receipt printer - flight plan,
 loadsheets, weather, gate assignment, whatever. Built this because staring at a browser
 tab for dispatch paperwork never felt right when you've got a working 58mm thermal
@@ -112,7 +114,7 @@ fit your printer's width and prints it, the same way Print Text does.
    **"Install Add-on From File..."**, and pick the `.xpi` you downloaded. (Dragging the
    file into a Firefox window works too.)
 
-For now i only made a firefox addon, but if people would like i can make one for google chrome aswell, join the discord or send me a message on flightsi.to 
+For now i only made a firefox addon, but if people would like i can make one for google chrome aswell, [join the discord](https://discord.gg/Qpxg4tZCc8) or send me a message on flightsi.to 
 
 Once it's in, open a Takeoff or Landing Performance calculation on SimBrief and the Send
 to: choice shows up next to "Information" (or next to the Formatted/Raw Output toggle on
