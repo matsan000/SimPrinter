@@ -85,7 +85,7 @@ your printer wants something else.
 SimBrief's takeoff/landing performance calculator doesn't expose its results through any
 API, so short of copy-pasting into SimPrinter's Print Text box, there's no way to get a
 V-speed strip onto paper automatically. The
-[FlightTools Firefox extension](https://github.com/matsan000/FlightTools-Firefox-Extension)
+[FlightTools Firefox extension](https://github.com/matsan000/Matsan000-s-Flighttools-firefox-extension)
 closes that gap: it adds a **Send to: SimPrinter / SimCallouts** choice directly onto
 SimBrief's calculator - both the per-flight popup and the standalone
 [Performance & Tools](https://dispatch.simbrief.com/tools) page - and picking SimPrinter
@@ -103,7 +103,7 @@ fit your printer's width and prints it, the same way Print Text does.
 1. In SimPrinter, open **Settings -> Printer & General Settings** and turn on **"Allow the
    SimPrinter browser extension to print"**, then Save.
 2. Grab the signed `.xpi` from the
-   [extension's Releases](https://github.com/matsan000/FlightTools-Firefox-Extension/releases).
+   [extension's Releases](https://github.com/matsan000/Matsan000-s-Flighttools-firefox-extension/releases).
 3. In Firefox, open `about:addons`, click the gear icon in the top right, choose
    **"Install Add-on From File..."**, and pick the `.xpi` you downloaded. (Dragging the
    file into a Firefox window works too.)
@@ -113,7 +113,7 @@ For now i only made a firefox addon, but if people would like i can make one for
 Once it's in, open a Takeoff or Landing Performance calculation on SimBrief and the Send
 to: choice shows up next to "Information" (or next to the Formatted/Raw Output toggle on
 the standalone tools page). Source lives in its own repo,
-[FlightTools-Firefox-Extension](https://github.com/matsan000/FlightTools-Firefox-Extension),
+[FlightTools-Firefox-Extension](https://github.com/matsan000/Matsan000-s-Flighttools-firefox-extension),
 since it's shared between SimPrinter and SimCallouts - see that repo's README if you'd
 rather build and sign your own copy.
 
