@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http;
 using System.Text;
 
 namespace SimPrinter
@@ -12,6 +13,15 @@ namespace SimPrinter
     public sealed class LocalPrintServer : IDisposable
     {
         public const int Port = 39901;
+
+        // SimCallouts's LocalImportServer, if that app happens to be running - the extension
+        // only ever talks to this port, so anything SimCallouts wants (V1/VR out of a takeoff
+        // performance calculation) has to be relayed on rather than received directly.
+        private const string SimCalloutsImportUrl = "http://127.0.0.1:39902/import-text";
+
+        // Short timeout so a hung/unreachable SimCallouts can't back up print requests -
+        // this is a best-effort relay, not something printing should ever wait on.
+        private static readonly HttpClient RelayClient = new() { Timeout = TimeSpan.FromMilliseconds(750) };
 
         private HttpListener? _listener;
         private CancellationTokenSource? _cts;
@@ -87,6 +97,7 @@ namespace SimPrinter
                     }
 
                     OnPrintTextRequested?.Invoke(body);
+                    _ = RelayToSimCalloutsAsync(body);
                     ctx.Response.StatusCode = 200;
                 }
                 else
@@ -101,6 +112,24 @@ namespace SimPrinter
             finally
             {
                 ctx.Response.Close();
+            }
+        }
+
+        /// <summary>
+        /// Fire-and-forget relay to SimCallouts. Failing silently is the point here - most
+        /// users won't have SimCallouts installed at all, and printing must never be held up
+        /// or fail because of this.
+        /// </summary>
+        private static async Task RelayToSimCalloutsAsync(string body)
+        {
+            try
+            {
+                using var content = new StringContent(body, Encoding.UTF8, "text/plain");
+                await RelayClient.PostAsync(SimCalloutsImportUrl, content);
+            }
+            catch
+            {
+                // SimCallouts isn't running, or isn't listening - nothing to do.
             }
         }
 
