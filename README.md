@@ -31,8 +31,8 @@ shutdown" in Settings to have it print itself once both engines shut down
 
 And a "Print Text" box for pasting in anything else, like a takeoff performance report
 copied out of SimBrief's calculator, since that data isn't exposed through any API - or
-skip the copy/paste entirely with the [Firefox extension](#firefox-extension-simbrief-performance-print)
-below, which adds a Print button right on SimBrief's own page.
+skip the copy/paste entirely with the [Firefox extension](#firefox-extension)
+below, which adds a Send to: SimPrinter choice right on SimBrief's own page.
 
 Output goes either to a thermal printer over serial/COM, or to whatever's already
 installed as a Windows printer. Dark mode's in there, and the window resizes down
@@ -80,18 +80,18 @@ characters come out garbled, it's probably a code page mismatch - output's CP437
 default, which is the common one, but that's a one-line change in `EscPosBuilder.cs` if
 your printer wants something else.
 
-## Firefox extension: SimBrief Performance Print
+## Firefox extension
 
 SimBrief's takeoff/landing performance calculator doesn't expose its results through any
 API, so short of copy-pasting into SimPrinter's Print Text box, there's no way to get a
-V-speed strip onto paper automatically. This extension closes that gap: it adds a **🖨
-Print** button directly onto SimBrief's calculator - both the per-flight popup and the
-standalone [Performance & Tools](https://dispatch.simbrief.com/tools) page - and one click
-sends the result straight to your printer.
-
-<p>
-  <img src="assets/screenshots/extension-print-button.png" width="420" alt="SimPrinter print button on SimBrief's Takeoff Performance calculator">
-</p>
+V-speed strip onto paper automatically. The
+[FlightTools Firefox extension](https://github.com/matsan000/FlightTools-Firefox-Extension)
+closes that gap: it adds a **Send to: SimPrinter / SimCallouts** choice directly onto
+SimBrief's calculator - both the per-flight popup and the standalone
+[Performance & Tools](https://dispatch.simbrief.com/tools) page - and picking SimPrinter
+sends the result straight to your printer. (The SimCallouts option is for
+[SimCallouts](https://github.com/matsan000/SimCallouts), a separate companion app that
+speaks V-speed callouts - only relevant if you use that too.)
 
 It works by having SimPrinter run a small server on `127.0.0.1` (localhost only - nothing
 outside your own machine can reach it, and it's off by default). The extension reads the
@@ -102,17 +102,20 @@ fit your printer's width and prints it, the same way Print Text does.
 
 1. In SimPrinter, open **Settings -> Printer & General Settings** and turn on **"Allow the
    SimPrinter browser extension to print"**, then Save.
-2. Grab `simprinter-performance-print-signed.xpi` from [Releases](../../releases).
+2. Grab the signed `.xpi` from the
+   [extension's Releases](https://github.com/matsan000/FlightTools-Firefox-Extension/releases).
 3. In Firefox, open `about:addons`, click the gear icon in the top right, choose
    **"Install Add-on From File..."**, and pick the `.xpi` you downloaded. (Dragging the
    file into a Firefox window works too.)
 
 For now i only made a firefox addon, but if people would like i can make one for google chrome aswell, join the discord or send me a message on flightsi.to 
 
-Once it's in, open a Takeoff or Landing Performance calculation on SimBrief and the Print
-button shows up next to "Information" (or next to the Formatted/Raw Output toggle on the
-standalone tools page). Source is in [`browser-extension/`](browser-extension/) if you'd
-rather build and sign your own copy - see that folder's README for the details.
+Once it's in, open a Takeoff or Landing Performance calculation on SimBrief and the Send
+to: choice shows up next to "Information" (or next to the Formatted/Raw Output toggle on
+the standalone tools page). Source lives in its own repo,
+[FlightTools-Firefox-Extension](https://github.com/matsan000/FlightTools-Firefox-Extension),
+since it's shared between SimPrinter and SimCallouts - see that repo's README if you'd
+rather build and sign your own copy.
 
 ## Where things live
 
@@ -136,7 +139,6 @@ src/SimPrinter/
   Preferences.cs               Settings persistence (%APPDATA%\SimPrinter)
   lib/SimConnect/               Vendored SimConnect client (see below)
 installer/                    WiX installer source (build-installer.ps1 builds the MSI)
-browser-extension/            Firefox extension - SimBrief Performance Print (see above)
 assets/                       Logo and other non-code assets
 ```
 
